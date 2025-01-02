@@ -110,7 +110,7 @@ class NewsController {
         data: payload
       })
 
-      return res.json({ status: 200, message: "News created successfully", news })
+      return res.json({ status: 200, success: true, message: "News created successfully", news })
     } catch (error) {
       console.log("error is ", error);
 
