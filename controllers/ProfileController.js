@@ -4,21 +4,21 @@ import prisma from "../DB/db_config.js"
 
 class ProfileController {
   static async index(req, res) {
+
     try {
+      const profile = await prisma.users.findUnique({
+        where: {
+          id: req.user.id
+        }
+      })
+
       const user = req.user
-      return res.json({ status: 200, user })
+      return res.json({ success: true, user, profile: profile.profile })
     } catch (error) {
-      return res.status(500).json({ message: "Something went wrong" })
+      return res.json({ success: false, message: "Something went wrong" })
     }
   }
 
-  static async store() {
-
-  }
-
-  static async show() {
-
-  }
 
   static async update(req, res) {
     try {

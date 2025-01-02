@@ -15,7 +15,7 @@ const authMiddleware = (req, res, next) => {
 
   // verify token
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.statue(401).json({ status: 401, message: "Unauthorizd" })
+    if (err) return res.status(401).json({ status: 401, message: "Unauthorizd" })
 
     req.user = user
     next()

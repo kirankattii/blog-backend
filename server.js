@@ -16,9 +16,9 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(fileUpload())
 app.use(express.static('public'))
-app.use(helmet())
+// app.use(helmet())
 app.use(cors())
-app.use(limiter)
+// app.use(limiter)
 
 
 import apiRoutes from './routes/api.js'

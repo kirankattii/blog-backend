@@ -7,7 +7,7 @@ import NewsApiTranasform from "../transform/newsApiTransform.js";
 class NewsController {
   static async index(req, res) {
     const page = Number(req.query.page) || 1
-    const limit = Number(req.query.limit) || 1
+    const limit = Number(req.query.limit) || 20
 
     if (page <= 0) {
       page = 1
@@ -35,12 +35,48 @@ class NewsController {
     const totalNews = await prisma.news.count()
     const totalPage = Math.ceil(totalNews / limit)
     return res.json({
-      status: 200, news: newsTransform, metaData: {
+      success: true, news: newsTransform, metaData: {
         totalPage,
         cuerrentPage: page,
         currentLimit: limit
       }
     })
+  }
+
+
+  static async show(req, res) {
+    try {
+      const { id } = req.params
+      const news = await prisma.news.findUnique({
+        where: {
+          id: Number(id)
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profile: true
+            }
+          }
+        }
+      })
+
+      const transformNews = news ? NewsApiTranasform.transform(news) : null
+
+
+      return res.json({ status: 200, news: transformNews })
+
+    } catch (error) {
+      console.log("error is ", error);
+
+      if (error instanceof errors.E_VALIDATION_ERROR) {
+        return res.status(400).json({ error: error.messages })
+      } else {
+        return res.status(500).json({ status: 500, message: "Somehing went wrong" })
+      }
+
+    }
   }
 
   static async store(req, res) {
@@ -87,40 +123,6 @@ class NewsController {
 
   }
 
-  static async show(req, res) {
-    try {
-      const { id } = req.params
-      const news = await prisma.news.findUnique({
-        where: {
-          id: Number(id)
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              profile: true
-            }
-          }
-        }
-      })
-
-      const transformNews = news ? NewsApiTranasform.transform(news) : null
-
-
-      return res.json({ status: 200, news: transformNews })
-
-    } catch (error) {
-      console.log("error is ", error);
-
-      if (error instanceof errors.E_VALIDATION_ERROR) {
-        return res.status(400).json({ error: error.messages })
-      } else {
-        return res.status(500).json({ status: 500, message: "Somehing went wrong" })
-      }
-
-    }
-  }
 
   static async update(req, res) {
     try {
@@ -208,7 +210,7 @@ class NewsController {
         }
       })
 
-      return res.json({ message: "News deleted successfully!" });
+      return res.json({ success: true, message: "News deleted successfully!" });
 
     } catch (error) {
       console.log("error is ", error);
@@ -223,6 +225,48 @@ class NewsController {
 
   }
 
+  static async getUserNews(req, res) {
+    try {
+      const user = req.user; // Assuming you have middleware for authentication
+
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: "You need to be logged in to view your news.",
+        });
+      }
+
+      const userNews = await prisma.news.findMany({
+        where: {
+          user_id: user.id,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              profile: true,
+            },
+          },
+        },
+      });
+
+      const newsTransform = userNews?.map((item) =>
+        NewsApiTranasform.transform(item)
+      );
+
+      return res.json({
+        success: true,
+        news: newsTransform,
+      });
+    } catch (error) {
+      console.error("Error fetching user news:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch user news.",
+      });
+    }
+  }
 
 }
 
